@@ -18,28 +18,32 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: 'gradle' # Speeds up subsequent builds by caching dependencies
+          cache: 'gradle'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true # Speeds up build by caching the Flutter SDK
+          cache: true
 
       - name: Get dependencies
         run: flutter pub get
 
       - name: Build Debug & Release APKs
-        # --split-per-abi makes the download smaller for each phone type
-        # We run them as one step or sequential commands to reuse the environment
         run: |
           flutter build apk --debug --split-per-abi
           flutter build apk --release --split-per-abi
 
-      - name: Upload All APKs
+      # Upload 1: Only Release APKs
+      - name: Upload Release APKs
         uses: actions/upload-artifact@v4
         with:
-          name: workshop-all-apks
-          # The wildcard *.apk captures app-arm64-v8a-release.apk, app-debug.apk, etc.
-          path: build/app/outputs/flutter-apk/*.apk
-          if-no-files-found: error # Ensures the workflow fails if nothing is found
+          name: release-apks
+          path: build/app/outputs/flutter-apk/*-release.apk
+
+      # Upload 2: Only Debug APKs
+      - name: Upload Debug APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apks
+          path: build/app/outputs/flutter-apk/*-debug.apk
